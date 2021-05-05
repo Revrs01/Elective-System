@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request # flask app
 
 import mysql.connector
 
@@ -25,7 +25,7 @@ def action():
                                    user="revrs01",
                                    passwd="1234",
                                    db="test",
-                                   auth_plugin='mysql_native_password')
+                                   auth_plugin='mysql_native_password')     # this is needed when using this IDE
     # 欲查詢的 query 指令
     query = "SELECT Name FROM students where name LIKE '{}%';".format(
         my_head)
