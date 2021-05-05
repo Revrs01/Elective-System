@@ -44,10 +44,3 @@ def action():
     return results
 
 
-    #...........................................
-
-
-
-
-    #frfiwjifjioiosoooomjj
-
