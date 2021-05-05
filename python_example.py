@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # coding=utf-8
 # -*- coding: UTF-8 -*-
-from flask import Flask, request
+from flask import Flask, request    # AAAA
 import MySQLdb
 
 app = Flask(__name__)
