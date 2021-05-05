@@ -1,4 +1,4 @@
-from flask import Flask, request    # import package
+from flask import Flask, request    # import package AAA
 import mysql.connector
 
 app = Flask(__name__)
