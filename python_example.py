@@ -42,3 +42,6 @@ def action():
     for (description,d2 ) in cursor.fetchall():
         results += "<p>{}:{}</p>".format(description,d2)
     return results
+
+
+    #...........................................
