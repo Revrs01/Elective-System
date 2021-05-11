@@ -6,12 +6,13 @@ import db_link
 
 app = Flask(__name__)
 
-conn=db_link.MySQLConnector
+conn = db_link.MySQLConnector
 
-#帳號及mysql部分還需修改
+
+# 帳號及mysql部分還需修改
 @app.route('/')
 def signin():
-	start = """
+    start = """
 	<html>
 	<title>選課系統</title>
 	<body>
@@ -26,12 +27,12 @@ def signin():
 	</body>
 	</html>
 	"""
-	return start
+    return start
 
-	
+
 @app.route('/index', methods=['POST'])
 def index():
-	form = """
+    form = """
 	<html>
 	<title>選課系統</title>
 	<body>
@@ -91,21 +92,23 @@ def index():
 	</body>
 	</html> 
 	"""
-	return form
+    return form
+
 
 @app.route('/action', methods=['POST'])
 def action():
     # 取得輸入的文字
-	my_class = request.form.get("my_class")
-	my_department = request.form.get("my_department")
-	my_name = request.form.get("my_name")
+    my_class = request.form.get("my_class")
+    my_department = request.form.get("my_department")
+    my_name = request.form.get("my_name")
     # 欲查詢的 query 指令
-	query = "SELECT * FROM courses where name LIKE '%{}%' and class LIKE '%{}%' and department LIKE '%{}%';".format(my_name,my_class,my_department)
+    query = "SELECT * FROM courses where name LIKE '%{}%' and class LIKE '%{}%' and department LIKE '%{}%';".format(
+        my_name, my_class, my_department)
     # 執行查詢
-	cursor = conn.cursor()
-	cursor.execute(query)
+    cursor = conn.cursor()
+    cursor.execute(query)
 
-	results = """
+    results = """
 	<!DOCTYPE html>
 	<html>
 	<title>選課系統</title>
@@ -126,10 +129,10 @@ def action():
 			<th align='center' valign="middle">加選</th>
 		</tr>
 	"""
-	#目前找不到正確使用超連結回到上一頁的做法，只好換成按鈕，並使用回到歷史紀錄中的上一頁
-    #取得並列出所有查詢結果
-	for (d1,d2,d3,d4,d5,d6,d7,d8,d9) in cursor.fetchall():
-		results += """
+    # 目前找不到正確使用超連結回到上一頁的做法，只好換成按鈕，並使用回到歷史紀錄中的上一頁
+    # 取得並列出所有查詢結果
+    for (d1, d2, d3, d4, d5, d6, d7, d8, d9) in cursor.fetchall():
+        results += """
 		<tr>
 			<td align='center' valign="middle">{}</td>
 			<td align='center' valign="middle">{}</td>
@@ -140,11 +143,11 @@ def action():
 			<td align='center' valign="middle">{}/{}</td>
 			<td align='center' valign="middle">{}</td>
 			<td align='center' valign="middle"><input type="button" value="加選"></input></td>
-		</tr>""".format(d1,d2,d3,d4,d5,d6,d8,d7,d9)
-	
-	results+="""
+		</tr>""".format(d1, d2, d3, d4, d5, d6, d8, d7, d9)
+
+    results += """
 	</table>
 	</body>
 	</html>
 	"""
-	return results
+    return results
