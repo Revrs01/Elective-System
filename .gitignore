@@ -1,5 +1,3 @@
-Elective System
-.idea
 _pycache_/
 mysqlclient/
 .flaskenv
