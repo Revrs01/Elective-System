@@ -3,3 +3,4 @@ db_link.py
 .flaskenv
 requirements.txt
 mysqlclient
+select清單.txt
