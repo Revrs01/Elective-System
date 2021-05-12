@@ -16,3 +16,9 @@ Columns ->
     課程代碼        Class_ID
     星期            Day
     節次            Sessions
+
+Table -> 學生資料 Student
+Columns ->
+    學號	Student_ID
+    姓名	Student_Name
+    系所	Department
