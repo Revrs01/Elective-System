@@ -81,7 +81,7 @@ def index():
 			</select>
 			<select name="my_department">
 				<option value="">請選擇</option>
-				<option>通識管理學系</option>
+				<option>管理學系</option>
 				<option>通識</option>
 				<option>資訊工程學系</option>
 			</select>
@@ -102,7 +102,7 @@ def action():
     my_department = request.form.get("my_department")
     my_class_name = request.form.get("my_name")
     # 欲查詢的 query 指令
-    query = "SELECT * FROM courses where name LIKE '%{}%' and class LIKE '%{}%' and department LIKE '%{}%';".format(my_class_name, my_class, my_department)
+    query = "SELECT * FROM course where class_name LIKE '%{}%' and class LIKE '%{}%' and department LIKE '%{}%';".format(my_class_name, my_class, my_department)
     # 執行查詢
     cursor = conn.cursor()
     cursor.execute(query)
