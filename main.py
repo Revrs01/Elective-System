@@ -1,27 +1,6 @@
 #!/usr/bin/env python3
 # coding=utf-8
 # -*- coding: UTF-8 -*-
-"""
-Table -> 課程    Course
-Columns ->
-    開課班級      Class
-    課程名稱      Class_Name
-    課程代碼      Class_ID
-    學分         Credits
-    必選修       Requirements
-    學系         Department
-    開放名額      Open_Quota
-    實收名額      Real_Quota
-    老師         Teachers
-"""
-"""
-Table -> 上課時間   Time
-Columns ->
-    課程代碼        Class_ID
-    星期            Day
-    節次            Sessions
-"""
-
 from flask import Flask, request  # ####
 import db_link
 
