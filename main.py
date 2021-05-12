@@ -1,6 +1,27 @@
 #!/usr/bin/env python3
 # coding=utf-8
 # -*- coding: UTF-8 -*-
+"""
+Table -> 課程    Course
+Columns ->
+    開課班級      Class
+    課程名稱      Class_Name
+    課程代碼      Class_ID
+    學分         Credits
+    必選修       Requirements
+    學系         Department
+    開放名額      Open_Quota
+    實收名額      Real_Quota
+    老師         Teachers
+"""
+"""
+Table -> 上課時間   Time
+Columns ->
+    課程代碼        Class_ID
+    星期            Day
+    節次            Sessions
+"""
+
 from flask import Flask, request  # ####
 import db_link
 
@@ -25,7 +46,7 @@ def signin():
             <input type="submit" value="登入">
         </form>
         </body>
-        </html> 
+    </html> 
         """
     return start
 
@@ -100,10 +121,10 @@ def action():
     # 取得輸入的文字
     my_class = request.form.get("my_class")
     my_department = request.form.get("my_department")
-    my_name = request.form.get("my_name")
+    my_class_name = request.form.get("my_name")
     # 欲查詢的 query 指令
     query = "SELECT * FROM courses where name LIKE '%{}%' and class LIKE '%{}%' and department LIKE '%{}%';".format(
-        my_name, my_class, my_department)
+        my_class_name, my_class, my_department)
     # 執行查詢
     cursor = conn.cursor()
     cursor.execute(query)
