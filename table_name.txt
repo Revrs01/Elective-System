@@ -22,3 +22,13 @@ Columns ->
     學號	Student_ID
     姓名	Student_Name
     系所	Department
+
+Table -> 關注課表 concerned
+Columns ->
+    學號	Student_ID
+    課程代碼    Class_ID
+
+Table -> 加選課表 registered
+Columns ->
+    學號	Student_ID
+    課程代碼    Class_ID
