@@ -17,17 +17,21 @@ def signin():
 		<title>選課系統</title>
 		<body>
 		<h1>登入</h1>
-		<form method="post" action="/index">
+		<form method="post" name="information" onsubmit="return checkusername();" action="/index">
 			<label>帳號：</label>
-			<input id="username" name="username"><br><br>
+			<input name="username"><br><br>
 			<label>密碼：</label>
 			<input type="password" name="pd"><br><br>
 			<input type="submit" value="登入">
 		</form>
 		</body>
 		<script>
-			var detname=document.getElementById("username").value
-			if(detname==="")alert("請輸入學號")
+			function checkusername(){
+				if(document.information.username.value==""){
+					alert("請輸入學號");
+					return false;
+				}
+			}
 		</script>
 		</html>
 	"""
