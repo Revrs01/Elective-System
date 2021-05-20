@@ -19,12 +19,16 @@ def signin():
 		<h1>登入</h1>
 		<form method="post" action="/index">
 			<label>帳號：</label>
-			<input name="username"><br><br>
+			<input id="username" name="username"><br><br>
 			<label>密碼：</label>
 			<input type="password" name="pd"><br><br>
 			<input type="submit" value="登入">
 		</form>
 		</body>
+		<script>
+			var detname=document.getElementById("username").value
+			if(detname==="")alert("請輸入學號")
+		</script>
 		</html>
 	"""
     return start
@@ -167,7 +171,7 @@ def action():
 		<html>
 		<title>選課系統</title>
 		<body>
-		<form method="post" action="/index" >
+		<form method="post" action="/action" >
 		<input type ="button" onclick="history.back()" value="Back to Query Interface"></input><br>
 		</form>
 		<table border="1" style="width:100%">
