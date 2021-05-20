@@ -43,7 +43,7 @@ def index():
 	cn={'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'七':7} #用字典將星期數從中文數字轉為阿拉伯數字
 	my_student_id=request.form.get("username")
 	# 找出使用者的必修課的學號、課程代碼、課程名稱、學分，主要是用來找學分
-	query = "select distinct student.student_id,course.class_id,course.class_name,course.credits from course,time,student where course.class = student.department and course.class_id = time.class_id and course.requirements='M' and student.student_id = '{}';".format(my_student_id)
+	query = "select distinct student.student_id,course.class_id,course.class_name,course.credits from course,time,student where course.class = student.class and course.class_id = time.class_id and course.requirements='M' and student.student_id = '{}';".format(my_student_id)
     # 執行查詢
 	cursor = conn.cursor()
 	cursor.execute(query)
@@ -53,9 +53,6 @@ def index():
 	#計算必修課程的學分數
 	for (r1,r2,r3,r4) in cursor.fetchall():
 		credsum+=r4
-
-	#找出使用者的必修課的學號、課程代碼、課程名稱、星期數、節次，主要用來查詢課程的時間
-	query = "select student.student_id,course.class_id,course.class_name,time.day,time.sessions,course.credits from course,time,student where course.class = student.department and course.class_id = time.class_id and course.requirements='M' and student.student_id = '{}';".format(my_student_id)
 
 	#選課清單
 	form = """
@@ -134,13 +131,17 @@ def index():
 			</tr>
 	"""
 
+	#找出使用者的必修課的學號、課程代碼、課程名稱、星期數、節次，主要用來查詢課程的時間
+	query = "select student.student_id,course.class_id,course.class_name,time.day,time.sessions,course.credits from course,time,student where course.class = student.class and course.class_id = time.class_id and course.requirements='M' and student.student_id = '{}';".format(my_student_id)
+	cursor.execute(query)
+	fetchresult=cursor.fetchall()
+
 	#比對星期數和節次將課程名稱填進去課表
 	for i in range(1,15):
 		form+="<tr>"
 		form+="<th align='center' valign='middle'>{}</th>".format(i)
 		for j in range(1,8):
-			cursor.execute(query)
-			for (r1,r2,r3,r4,r5,r6) in cursor.fetchall():
+			for (r1,r2,r3,r4,r5,r6) in fetchresult:
 				if i==r5 and j==cn[r4]:
 					form+="<td align='center' valign='middle'>{}</th>".format(r3)
 					break;
@@ -220,6 +221,7 @@ def action():
 		</form>
 	"""
 
+	#可以收拉列表的函式，mytable是div的id
 	results += """
 		<script>
 			function myFunction(){
