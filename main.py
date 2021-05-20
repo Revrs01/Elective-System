@@ -8,6 +8,17 @@ app = Flask(__name__)
 
 conn = db_link.MySQLConnector
 
+query = "TRUNCATE TABLE registered"
+cursor = conn.cursor()
+cursor.execute(query)
+
+
+def registered_M(my_student_id):
+	query ="insert into registered select distinct student.student_id,course.class_id from student,time,course where course.class = student.class and course.class_id = time.class_id and course.requirements='M' and student.Student_ID = '{}';".format(my_student_id)
+	cursor = conn.cursor()
+	cursor.execute(query)
+	conn.commit()
+
 
 # 帳號及mysql部分還需修改
 @app.route('/')
@@ -42,17 +53,18 @@ def signin():
 def index():
 	cn={'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'七':7} #用字典將星期數從中文數字轉為阿拉伯數字
 	my_student_id=request.form.get("username")
-	# 找出使用者的必修課的學號、課程代碼、課程名稱、學分，主要是用來找學分
-	query = "select distinct student.student_id,course.class_id,course.class_name,course.credits from course,time,student where course.class = student.class and course.class_id = time.class_id and course.requirements='M' and student.student_id = '{}';".format(my_student_id)
-    # 執行查詢
+
+	# 將使用者的必修課加入課表中
+	registered_M(my_student_id)
+
+	#查詢目前課表內學分數
+	query = "select sum(course.Credits) from registered natural join course where registered.student_id = '{}';".format(my_student_id)
+	# 執行查詢
 	cursor = conn.cursor()
 	cursor.execute(query)
 
-	credsum=0 #總學分
-
-	#計算必修課程的學分數
-	for (r1,r2,r3,r4) in cursor.fetchall():
-		credsum+=r4
+	#計算課程的學分數
+	credsum = cursor.fetchall()
 
 	#選課清單
 	form = """
@@ -114,7 +126,7 @@ def index():
 		<p><a href="/">重新登入</a></p>
 		<label>使用者：{}</label><br>
 		<label>總學分：{}</label>
-	""".format(my_student_id,credsum)
+	""".format(my_student_id,credsum[0][0])
 
 	#使用者的必修課表
 	form+="""
@@ -132,7 +144,7 @@ def index():
 	"""
 
 	#找出使用者的必修課的學號、課程代碼、課程名稱、星期數、節次，主要用來查詢課程的時間
-	query = "select student.student_id,course.class_id,course.class_name,time.day,time.sessions,course.credits from course,time,student where course.class = student.class and course.class_id = time.class_id and course.requirements='M' and student.student_id = '{}';".format(my_student_id)
+	query = "select registered.student_id,registered.class_id,course.class_name,time.day,time.sessions,course.credits from course,time,registered where course.class_id=time.class_id and registered.class_id=course.class_id;"
 	cursor.execute(query)
 	fetchresult=cursor.fetchall()
 
