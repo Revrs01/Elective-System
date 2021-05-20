@@ -161,7 +161,9 @@ def action():
     my_department = request.form.get("my_department")
     my_class_name = request.form.get("my_name")
     # 欲查詢的 query 指令
+
     query = "SELECT * FROM course where class_name LIKE '%{}%' and class LIKE '%{}%' and department LIKE '%{}%';".format(my_class_name, my_class, my_department)
+
     # 執行查詢
     cursor = conn.cursor()
     cursor.execute(query)
