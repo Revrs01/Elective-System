@@ -4,19 +4,22 @@
 from flask import Flask, request
 import db_link
 
-app = Flask(__name__)
-
-conn = db_link.MySQLConnector
-query = "TRUNCATE TABLE registered"
-cursor = conn.cursor()
-cursor.execute(query)
-
-
-def registered_M(my_student_id):
-    query ="insert into registered select distinct student.student_id,course.class_id from student,time,course where course.class = student.class and course.class_id = time.class_id and course.requirements='M' and student.Student_ID = '{}';".format(my_student_id)
+def registered_M():    #將必修課加入課表中
+    query ="insert into registered select distinct student.student_id,course.class_id from student,time,course where course.class = student.class and course.class_id = time.class_id and course.requirements='M';"
     cursor = conn.cursor()
     cursor.execute(query)
     conn.commit()
+def clear_registered():      #清除課表中所有內容
+    query = "TRUNCATE TABLE registered"
+    cursor = conn.cursor()
+    cursor.execute(query)
+
+app = Flask(__name__)
+
+conn = db_link.MySQLConnector
+clear_registered()
+registered_M()
+
 
 # 帳號及mysql部分還需修改
 @app.route('/')
@@ -52,8 +55,7 @@ def signin():
 def index():
 	cn={'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'七':7} #用字典將星期數從中文數字轉為阿拉伯數字    
 	my_student_id=request.form.get("username")
-	# 將使用者的必修課加入課表中
-	registered_M(my_student_id)
+	
     #查詢目前課表內學分數
 	query = "select sum(course.Credits) from registered natural join course where registered.student_id = '{}';".format(my_student_id)
     # 執行查詢
@@ -63,11 +65,6 @@ def index():
     #計算課程的學分數
 	credsum = cursor.fetchall()
 	   
-    
-	#找出使用者的必修課的學號、課程代碼、課程名稱、星期數、節次，主要用來查詢課程的時間
-	query = "select student.student_id,course.class_id,course.class_name,time.day,time.sessions,course.credits from course,time,student where course.class = student.department and course.class_id = time.class_id and course.requirements='M' and student.student_id = '{}';".format(my_student_id)
-
-
 	#選課清單
 	form = """
 		<html>
@@ -144,14 +141,17 @@ def index():
 				<th align='center' valign="middle">Sun</th>
 			</tr>
 	"""
-
+    #找出使用者的必修課的學號、課程代碼、課程名稱、星期數、節次，主要用來查詢課程的時間
+	query = "select registered.student_id,registered.class_id,course.class_name,time.day,time.sessions,course.credits from course,time,registered where course.class_id=time.class_id and registered.class_id=course.class_id and registered.student_id = '{}';".format(my_student_id)
+	cursor.execute(query)
+	fetchresult=cursor.fetchall()
+    
 	#比對星期數和節次將課程名稱填進去課表
 	for i in range(1,15):
 		form+="<tr>"
 		form+="<th align='center' valign='middle'>{}</th>".format(i)
 		for j in range(1,8):
-			cursor.execute(query)
-			for (r1,r2,r3,r4,r5,r6) in cursor.fetchall():
+			for (r1,r2,r3,r4,r5,r6) in fetchresult:
 				if i==r5 and j==cn[r4]:
 					form+="<td align='center' valign='middle'>{}</th>".format(r3)
 					break;
