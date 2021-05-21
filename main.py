@@ -17,9 +17,8 @@ def clear_registered():      #清除課表中所有內容
 app = Flask(__name__)
 
 conn = db_link.MySQLConnector
-clear_registered()
-registered_M()
-
+clear_registered()      #清除課表中所有內容
+registered_M()           #將必修課加入課表中
 
 # 帳號及mysql部分還需修改
 @app.route('/')
