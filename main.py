@@ -71,7 +71,7 @@ def check_register_credit(class_id):#檢查已選課程中所有學分數加上�
     cursor = conn.cursor()
     cursor.execute(query)
     add_credit = cursor.fetchall()
-    if(credsum[0][0]+ add_credit[0][0] > 12):
+    if(credsum[0][0]+ add_credit[0][0] > 30):
         return True
     else:
         return False
