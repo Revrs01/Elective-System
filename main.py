@@ -189,6 +189,7 @@ def action():
     cursor = conn.cursor()
     cursor.execute(query)
 
+    # 目前找不到正確使用超連結回到上一頁的做法，只好換成按鈕，並使用回到歷史紀錄中的上一頁
     results = """
 		<!DOCTYPE html>
 		<html>
@@ -197,8 +198,10 @@ def action():
 		<form method="post" action="/action" >
 		<input type ="button" onclick="history.back()" value="Back to Query Interface"></input><br>
 		</form>
+		<h1>退選清單</h1>
+		<button onclick="hideandshow(wdinf)">顯示退選清單</button>
         <form method="post" action="/register_class">
-        <h1>退選清單</h1>
+        <div id="withdraw_table">
         <table border="1" style="width:100%">
 			<tr>
 				<th align='center' valign="middle">開課班級</th>
@@ -227,7 +230,11 @@ def action():
 			</tr>
 		""".format(d3, d4, d1, d5, d6, d7, d9, d8, d10, d1)
 
-    results+="</table>"
+    results+="""
+    	</table>
+    	</div>
+    	</form>
+    """
 
     query = "SELECT * FROM course where class_name LIKE '%{}%' and class LIKE '%{}%' and department LIKE '%{}%';".format(my_class_name, my_class, my_department)
 
@@ -236,6 +243,9 @@ def action():
     cursor.execute(query)
     results+="""
         <h1>加選清單</h1>
+        <button onclick="hideandshow(reinf)">顯示選課清單</button>
+        <form method="post" action="/register_class">
+        <div id="register_table">
 		<table border="1" style="width:100%">
 			<tr>
 				<th align='center' valign="middle">開課班級</th>
@@ -249,7 +259,6 @@ def action():
 				<th align='center' valign="middle">加選</th>
 			</tr>
 	"""
-    # 目前找不到正確使用超連結回到上一頁的做法，只好換成按鈕，並使用回到歷史紀錄中的上一頁
     # 取得並列出所有查詢結果
     for (d1, d2, d3, d4, d5, d6, d7, d8, d9) in cursor.fetchall():
         results += """
@@ -268,17 +277,32 @@ def action():
 
     results += """
 		</table>
+		</div>
+		</form>
+		<script>
+			var reinf=document.getElementById("register_table");
+			var wdinf=document.getElementById("withdraw_table");
+			function hideandshow(inf){
+				if(inf.style.display==="none"){
+					inf.style.display="block";
+				}
+				else{
+					inf.style.display="none";
+				}
+			}
+		</script>
 		</body>
 		</html>
 	"""
     return results
+
 @app.route('/register_class', methods=['GET', 'POST'])
 def register_class():
     #my_student_id = request.form.get("username")
     class_id = request.form.get("my_class_id")
     register(my_student_id,class_id)
 
-    view="""
+    rview = """
     	<html>
     	<body>
     	<h1>加選成功</h1>
@@ -287,4 +311,17 @@ def register_class():
     	</html>
     """
 
-    return view
+    return rview
+
+@app.route('/withdraw_class', methods=['GET', 'POST'])
+def withdraw_class():
+	wview = """
+		<html>
+		<body>
+		<h1>加選失敗</h1>
+		<input type ="button" onclick="history.back()" value="回到上一頁"></input><br>
+		</body>
+		</html>
+	"""
+
+	return wview
