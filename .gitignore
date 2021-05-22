@@ -1,6 +1,5 @@
 __pycache__
 db_link.py
 .flaskenv
-requirements.txt
-mysqlclient
-select清單.txt
+<<<<<<< HEAD
+test.py
