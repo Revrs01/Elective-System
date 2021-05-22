@@ -13,12 +13,18 @@ def clear_registered():      #清除課表中所有內容
     query = "TRUNCATE TABLE registered"
     cursor = conn.cursor()
     cursor.execute(query)
+def register(my_student_id,class_id):
+    query = "insert into registered VALUES('{}',{})".format(my_student_id, class_id)
+    cursor = conn.cursor()
+    cursor.execute(query)
+    conn.commit()
 
 app = Flask(__name__)
 
 conn = db_link.MySQLConnector
 clear_registered()      #清除課表中所有內容
 registered_M()           #將必修課加入課表中
+my_student_id = 'D0XXXXXX'
 
 # 帳號及mysql部分還需修改
 @app.route('/')
@@ -49,9 +55,8 @@ def signin():
     return start
 
 @app.route('/index', methods=['POST'])
-
-
 def index():
+	global my_student_id
 	cn={'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'七':7} #用字典將星期數從中文數字轉為阿拉伯數字    
 	my_student_id=request.form.get("username")
 	
@@ -190,6 +195,7 @@ def action():
 		<form method="post" action="/action" >
 		<input type ="button" onclick="history.back()" value="Back to Query Interface"></input><br>
 		</form>
+        <form method="post" action="/register_class">
 		<table border="1" style="width:100%">
 			<tr>
 				<th align='center' valign="middle">開課班級</th>
@@ -216,9 +222,9 @@ def action():
 				<td align='center' valign="middle">{}</td>
 				<td align='center' valign="middle">{}/{}</td>
 				<td align='center' valign="middle">{}</td>
-				<td align='center' valign="middle"><input type="button" value="加選"></input></td>
+				<td align='center' valign="middle"><button name="my_class_id" value={} onclick="/register_class()">加選</button></td>
 			</tr>
-		""".format(d1, d2, d3, d4, d5, d6, d8, d7, d9)
+		""".format(d1, d2, d3, d4, d5, d6, d8, d7, d9, d3)
 
     results += """
 		</table>
@@ -226,3 +232,9 @@ def action():
 		</html>
 	"""
     return results
+@app.route('/register_class', methods=['GET', 'POST'])
+def register_class():
+    #my_student_id = request.form.get("username")
+    class_id = request.form.get("my_class_id")
+    register(my_student_id,class_id)
+    return '加選成功'
