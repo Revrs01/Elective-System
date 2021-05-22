@@ -14,16 +14,27 @@ cursor.execute(query)
 
 
 def registered_M(my_student_id):
-	query ="insert into registered select distinct student.student_id,course.class_id from student,time,course where course.class = student.class and course.class_id = time.class_id and course.requirements='M' and student.Student_ID = '{}';".format(my_student_id)
+	query ="insert into registered select distinct student.student_id,course.class_id from student,time,course where course.class = student.class and course.class_id = time.class_id and course.requirements='M';"
 	cursor = conn.cursor()
 	cursor.execute(query)
 	conn.commit()
+
+def clear_registered():      #清除課表中所有內容
+    query = "TRUNCATE TABLE registered"
+    cursor = conn.cursor()
+    cursor.execute(query)
+
+def register(my_student_id,class_id):
+    query = "insert into registered VALUES('{}',{})".format(my_student_id, class_id)
+    cursor = conn.cursor()
+    cursor.execute(query)
+    conn.commit()
 
 
 # 帳號及mysql部分還需修改
 @app.route('/')
 def signin():
-    start = """
+	start = """
 		<html>
 		<title>選課系統</title>
 		<body>
@@ -46,7 +57,8 @@ def signin():
 		</script>
 		</html>
 	"""
-    return start
+
+	return start
 
 
 @app.route('/index', methods=['POST'])
@@ -58,7 +70,7 @@ def index():
 	registered_M(my_student_id)
 
 	#查詢目前課表內學分數
-	query = "select sum(course.Credits) from registered natural join course where registered.student_id = '{}';".format(my_student_id)
+	query = "SELECT SUM(course.Credits) FROM registered NATURAL JOIN course WHERE registered.student_id = '{}';".format(my_student_id)
 	# 執行查詢
 	cursor = conn.cursor()
 	cursor.execute(query)
@@ -144,7 +156,7 @@ def index():
 	"""
 
 	#找出使用者的必修課的學號、課程代碼、課程名稱、星期數、節次，主要用來查詢課程的時間
-	query = "select registered.student_id,registered.class_id,course.class_name,time.day,time.sessions,course.credits from course,time,registered where course.class_id=time.class_id and registered.class_id=course.class_id;"
+	query = "select registered.student_id,registered.class_id,course.class_name,time.day,time.sessions,course.credits from course,time,registered where course.class_id=time.class_id and registered.class_id=course.class_id and registered.student_id = '{}';".format(my_student_id)
 	cursor.execute(query)
 	fetchresult=cursor.fetchall()
 
@@ -190,11 +202,11 @@ def action():
 		<html>
 		<title>選課系統</title>
 		<body>
-		<form method="post" action="/curriculum" >
+		<form method="post" action="/register_class" >
 		<input type ="button" onclick="history.back()" value="Back to Query Interface"></input><br>
 		</form>
 		<button onclick="myFunction()">顯示列表</button>
-		<form method="post" action="/curriculum">
+		<form method="post" action="/register_class">
 		<div id="mytable">
 		<table border="1" style="width:100%">
 			<tr>
@@ -222,7 +234,7 @@ def action():
 				<td align='center' valign="middle">{}</td>
 				<td align='center' valign="middle">{}/{}</td>
 				<td align='center' valign="middle">{}</td>
-				<td align='center' valign="middle"><input type="button" name="{}" value="加選"></input></td>
+				<td align='center' valign="middle"><button name="my_class_id" value={} onclick="/register_class()">加選</button></td>
 			</tr>
 		""".format(d1, d2, class_id, d4, d5, d6, d8, d7, d9, class_id)
 
@@ -254,17 +266,3 @@ def action():
 
 	return results
 
-@app.route('/curriculum', methods=['POST'])
-def curriculum():
-	rr=request.form
-	if rr:
-		print(rr)
-	else:
-		print("沒有東西")
-	test="""
-		<html>
-		<h1>test</h1>
-		</html>
-	"""
-
-	return test
