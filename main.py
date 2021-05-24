@@ -312,7 +312,7 @@ def index():
 def action():
     global my_class,my_department,my_class_name,flag_action
     # 取得輸入的文字
-    if(flag_action or request.form.get("my_class")=='' or request.form.get("my_department") == '' or request.form.get("my_name") == ''):
+    if(flag_action or request.form.get("my_class")!='' or request.form.get("my_department") != '' or request.form.get("my_name") != ''):
         my_class = request.form.get("my_class")
         my_department = request.form.get("my_department")
         my_class_name = request.form.get("my_name")
