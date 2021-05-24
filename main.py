@@ -117,7 +117,8 @@ my_student_id = 'D0XXXXXX'
 flag_index = True
 flag_action = True
 credsum = 0
-
+my_student_name = 'XXX'
+my_student_class='XXXX'
 
 # 帳號及mysql部分還需修改
 @app.route('/')
@@ -149,7 +150,7 @@ def signin():
 
 @app.route('/index', methods=['GET','POST'])
 def index():
-    global my_student_id,flag_index
+    global my_student_id,flag_index,my_student_name,my_student_class
     cn = {'一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6, '七': 7}  # 用字典將星期數從中文數字轉為阿拉伯數字
     if(flag_index):
         my_student_id = request.form.get("username")
@@ -157,6 +158,14 @@ def index():
 
     # 呼叫計算學分數函式
     count_total_credits(my_student_id)
+
+    query="SELECT student_name,class FROM student WHERE student_id='{}'".format(my_student_id)
+    cursor = conn.cursor()
+    cursor.execute(query)
+    infres=cursor.fetchall()
+    my_student_name=infres[0][0]
+    my_student_class=infres[0][1]
+
 
     # 選課清單
     form = """
@@ -216,13 +225,17 @@ def index():
             <input type="submit" value="送出">
         </form>
         <p><a href="/">重新登入</a></p>
+        <label>班級：{}</label><br>
         <label>使用者：{}</label><br>
+        <label>學號：{}</label><br>
         <label>總學分：{}</label>
-    """.format(my_student_id, credsum[0][0])
+    """.format(my_student_class, my_student_name, my_student_id, credsum[0][0])
 
     # 使用者的必修課表
     form += """      
         <h1>已選課表</h1>
+        <button onclick="hideandshow(registeredinf)">收起已選課表</button>
+        <div id="registered_table">
         <table border="2">
             <tr>
                 <th align='center' valign="middle"></th>
@@ -261,11 +274,13 @@ def index():
             form += "</td>"
         form += "</tr>"
 
-    form += "</table><br>"
+    form += "</table></div><br>"
 
     # 使用者的關注課表
     form += """
         <h1>關注課表</h1>
+        <button onclick="hideandshow(concernedinf)">收起關注課表</button>
+        <div id="concerned_table">
         <table border="2">
             <tr>
                 <th align='center' valign="middle"></th>
@@ -304,10 +319,25 @@ def index():
             form += "</td>"
         form += "</tr>"
 
-    form += "</table>"
+    form += """
+        </table>
+        </div>
+    """
 
     form += """
         </body>
+        <script>
+            var registeredinf=document.getElementById("registered_table");
+            var concernedinf=document.getElementById("concerned_table");
+            function hideandshow(inf){
+                if(inf.style.display==="none"){
+                    inf.style.display="block";
+                }
+                else{
+                    inf.style.display="none";
+                }
+            }
+        </script>
         </html> 
     """
 
@@ -329,6 +359,7 @@ def action():
         my_class_name = my_class_name
     # 欲查詢的 query 指令
 
+    count_total_credits(my_student_id)
 
     query = "SELECT DISTINCT * from registered NATURAL JOIN course WHERE registered.student_id='{}' GROUP BY class_id;".format(my_student_id)
 
@@ -344,11 +375,18 @@ def action():
         <html>
         <title>選課系統</title>
         <body>
+        <label>班級：{}</label><br>
+        <label>使用者：{}</label><br>
+        <label>學號：{}</label><br>
+        <label>總學分：{}</label>
         <form method="post" action="/index">
             <button name="返回搜尋">返回搜尋</button>
         </form>
+    """.format(my_student_class, my_student_name, my_student_id, credsum[0][0])
+
+    results += """
         <h1>退選清單</h1>
-        <button onclick="hideandshow(wdinf)">顯示退選清單</button>
+        <button onclick="hideandshow(wdinf)">收起退選清單</button>
         <div id="withdraw_table">
         <form name="unregister" method="post" action="withdraw_class">
             <input type="hidden" name="class_id">
@@ -412,7 +450,7 @@ def action():
         </div>
     """
 
-    #關注清單111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+    #關注清單
     query = "SELECT DISTINCT * FROM concerned NATURAL JOIN course WHERE concerned.student_id='{}' GROUP BY class_id;".format(my_student_id)
 
     # 執行查詢
@@ -422,7 +460,7 @@ def action():
 
     results += """
         <h1>關注清單</h1>
-        <button onclick="hideandshow(coninf)">顯示關注清單</button>
+        <button onclick="hideandshow(coninf)">收起關注清單</button>
         <div id="concern_table">
         <table border="1" style="width:100%">
             <tr>
@@ -483,7 +521,7 @@ def action():
 
     results += """
         <h1>加選清單</h1>
-        <button onclick="hideandshow(reinf)">顯示選課清單</button>
+        <button onclick="hideandshow(reinf)">收起選課清單</button>
         <div id="register_table">
         <table border="1" style="width:100%">
             <tr>
