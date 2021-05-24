@@ -174,14 +174,16 @@ def index():
         <body>
         <h1>選課系統</h1>
         <form method="post" action="/action" >
+        <label>系所：</label>
             <select name="my_department">
-                <option value="">請選擇</option>
+                <option value="">全部</option>
                 <option>企業管理學系</option>
                 <option>通識</option>
                 <option>資訊工程學系</option>
             </select>
+        <label>班級：</label>
             <select name="my_class">
-                    <option value="">請選擇</option>
+                    <option value="">全部</option>
                 <optgroup label="企管系">
                     <option>企管一甲</option>
                     <option>企管一乙</option>
@@ -221,6 +223,7 @@ def index():
                     <option>資訊跨領域學程資訊三</option>
                 </optgroup>
             </select>
+        <label>課程名稱：</label>
             <input name="my_name">
             <input type="submit" value="送出">
         </form>
