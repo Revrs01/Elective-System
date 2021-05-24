@@ -18,7 +18,7 @@ def clear_registered():#清除課表中所有內容
     
     
 def register(my_student_id,class_id):#加選課程
-    query = "insert into registered VALUES('{}',{})".format(my_student_id, class_id)
+    query = "INSERT INTO registered VALUES('{}',{})".format(my_student_id, class_id)
     cursor = conn.cursor()
     cursor.execute(query)
     conn.commit()
@@ -267,8 +267,24 @@ def action():
 		</form>
 		<h1>退選清單</h1>
 		<button onclick="hideandshow(wdinf)">顯示退選清單</button>
-        <form method="post" action="/withdraw_class">
-        <div id="withdraw_table">
+		<form method="post" action="/withdraw_class">
+		<div id="withdraw_table">
+		<form name="unregister" method="post" action="/withdraw_class">
+			<input type="hidden" name="class_id">
+		</form>
+		<script>
+			function submit_unregister(class_id, requirements) {
+                var is_submit = true;
+                if (requirements == 'M') {
+                    is_submit = confirm("這是必修，確定要退？");
+                }
+                if (is_submit) {
+                    var theForm = document.forms["unregister"]
+                    theForm.class_id.value = class_id;
+                    theForm.submit();
+                }
+            }
+        </script>
         <table border="1" style="width:100%">
 			<tr>
 				<th align='center' valign="middle">開課班級</th>
@@ -293,9 +309,9 @@ def action():
 				<td align='center' valign="middle">{}</td>
 				<td align='center' valign="middle">{}/{}</td>
 				<td align='center' valign="middle">{}</td>
-				<td align='center' valign="middle"><button name="my_class_id" value={} onclick="/register_class">退選</button></td>
+				<td align='center' valign="middle"><button name="my_class_id" value={} onclick="submit_unregister({},'{}')">退選</button></td>
 			</tr>
-		""".format(d3, d4, d1, d5, d6, d7, d9, d8, d10, d1)
+		""".format(d3, d4, d1, d5, d6, d7, d9, d8, d10, d1, d1, d6)
 
     results+="""
     	</table>
@@ -418,13 +434,48 @@ def register_class():
 
 @app.route('/withdraw_class', methods=['GET', 'POST'])
 def withdraw_class():
-	wview = """
-		<html>
-		<body>
-		<h1>退選成功</h1>
-		<input type ="button" onclick="history.back()" value="返回課程清單"></input><br>
-		</body>
-		</html>
-	"""
+    get_class_id = request.form.get("my_class_id")
+    query = "select class_id from registered where class_id = '{}' and student_ID = '{}'".format(get_class_id,
+                                                                                                 my_student_id)
+    cursor = conn.cursor()
+    cursor.execute(query)
 
-	return wview
+    my_class_id = cursor.fetchall()[0][0]
+
+    query_sum_of_class_credits = "select credits from course join registered on course.class_ID = registered.class_ID where student_ID = '{}' and registered.class_ID = '{}' group by credits".format(
+        my_student_id, my_class_id)
+    cursor.execute(query_sum_of_class_credits)
+    my_class_credits = cursor.fetchall()[0][0]
+
+    query_sum_my_credits = "select sum(credits) from course join registered on course.class_ID = registered.Class_ID where Student_ID = '{}';".format(
+        my_student_id)
+    cursor.execute(query_sum_my_credits)
+    my_class_credits_sum = cursor.fetchall()[0][0]
+    if my_class_id and int(my_class_credits_sum) - int(my_class_credits) >= 9:
+        cursor.execute(
+            "delete from registered where student_ID = '{}' and class_ID = '{}'".format(my_student_id, my_class_id))
+        conn.commit()
+        success_view = """
+                    <html>
+                    <body>
+                    <input type="button" onclick="history.back()" value="返回課程清單"></input>
+                    <script>
+                        alert('退選成功')
+                    </script>
+                    </body>
+                    </html>
+                """
+
+        return success_view
+    else:
+        failed_view = """
+                    <html>
+                    <body>
+                    <input type="button" onclick="history.back()" value="返回課程清單"></input>
+                    <script>
+                        alert('退選失敗')
+                    </script>                 
+                    </body>
+                    </html>
+                """
+        return failed_view
