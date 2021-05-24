@@ -469,7 +469,6 @@ def withdraw_class():
         conn.commit()
         success_view = """
                     <html>
-                    <meta http-equiv="refresh">
                     <body>
                     <input type="button" onclick="history.back()" value="返回課程清單"></input>
                     <script>
