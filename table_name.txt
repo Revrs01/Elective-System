@@ -22,6 +22,7 @@ Columns ->
     學號	Student_ID
     姓名	Student_Name
     系所	Department
+    班級  Class
 
 Table -> 關注課表 concerned
 Columns ->
