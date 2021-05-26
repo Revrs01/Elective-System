@@ -457,7 +457,7 @@ def action():
     """
 
     # 關注清單
-    query = "SELECT DISTINCT * FROM concerned NATURAL JOIN course WHERE concerned.student_id='{}' GROUP BY class_id;".format(
+    query = "SELECT DISTINCT * FROM concerned NATURAL JOIN course WHERE concerned.student_id='{}';".format(
         my_student_id)
 
     # 執行查詢
