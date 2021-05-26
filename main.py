@@ -154,7 +154,7 @@ def signin():
 
 @app.route('/index', methods=['GET','POST'])
 def index():
-    global my_student_id,flag_index,my_student_name,my_student_class
+    global my_student_id,flag_index,my_student_name,my_student_class,my_class_id_name
     cn = {'一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6, '七': 7}  # 用字典將星期數從中文數字轉為阿拉伯數字
     if(flag_index):
         my_student_id = request.form.get("username")
@@ -162,17 +162,19 @@ def index():
 
     # 呼叫計算學分數函式
     count_total_credits(my_student_id)
-    global my_class,my_department,my_class_name,flag_action
+    global my_class,my_department,my_class_name,my_class_id_name,flag_action
     # 取得輸入的文字
-    if(flag_action or request.form.get("my_class")=='' or request.form.get("my_department") == '' or request.form.get("my_name") == ''):
+    if(flag_action or request.form.get("my_class")=='' or request.form.get("my_department") == '' or request.form.get("my_name") == '' or request.form.get("my_class_id_name") == ''):
         my_class = request.form.get("my_class")
         my_department = request.form.get("my_department")
         my_class_name = request.form.get("my_name")
+        my_class_id_name = request.form.get("my_class_id_name")
         flag_action = False
     else:
         my_class = my_class
         my_department = my_department
         my_class_name = my_class_name
+        my_class_id_name = my_class_id_name
 
     if(flag_redirect):
         query="SELECT student_name,class FROM student WHERE student_id='{}'".format(my_student_id)
@@ -241,6 +243,8 @@ def index():
             </select>
         <label>課程名稱：</label>
             <input name="my_name">
+        <label>課程代碼：</label>
+            <input name="my_class_id_name">
             <button name="搜尋">搜尋</button><br>
         </form>
         <p><a href="/">重新登入</a></p>
@@ -311,7 +315,7 @@ def index():
     """
 
     #關注清單
-    query = "SELECT * FROM course where class_name LIKE '%{}%' and class LIKE '%{}%' AND department LIKE '%{}%' and Class_ID not in (SELECT Class_id FROM registered WHERE Student_ID = '{}') and Class_ID not in (SELECT Class_id FROM concerned WHERE Student_ID = '{}')".format(my_class_name, my_class, my_department, my_student_id, my_student_id)
+    query = "SELECT * FROM course where class_id LIKE '%{}%' AND class_name LIKE '%{}%' and class LIKE '%{}%' AND department LIKE '%{}%' and Class_ID not in (SELECT Class_id FROM registered WHERE Student_ID = '{}') and Class_ID not in (SELECT Class_id FROM concerned WHERE Student_ID = '{}')".format(my_class_id_name, my_class_name, my_class, my_department, my_student_id, my_student_id)
 
     # 執行查詢
     cursor = conn.cursor()
