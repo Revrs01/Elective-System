@@ -100,9 +100,11 @@ def concern(my_student_id, class_id):  # 關注課程
 
 
 def init_flag():
-    global flag_action, flag_index
+    global flag_action, flag_index, flag_redirect
+
     flag_index = True
     flag_action = True
+    flag_redirect = True
 
 
 def del_concern(my_student_id, class_id):  # 退關注
@@ -120,6 +122,7 @@ registered_M()  # 將必修課加入課表中
 my_student_id = 'D0XXXXXX'
 flag_index = True
 flag_action = True
+flag_redirect = True
 credsum = 0
 my_student_name = 'XXX'
 my_student_class = 'XXXX'
@@ -163,29 +166,44 @@ def index():
 
     # 呼叫計算學分數函式
     count_total_credits(my_student_id)
+    global my_class, my_department, my_class_name, flag_action
+    # 取得輸入的文字
+    if (flag_action or request.form.get("my_class") == '' or request.form.get(
+            "my_department") == '' or request.form.get("my_name") == ''):
+        my_class = request.form.get("my_class")
+        my_department = request.form.get("my_department")
+        my_class_name = request.form.get("my_name")
+        flag_action = False
+    else:
+        my_class = my_class
+        my_department = my_department
+        my_class_name = my_class_name
 
-    query = "SELECT student_name,class FROM student WHERE student_id='{}'".format(my_student_id)
-    cursor = conn.cursor()
-    cursor.execute(query)
-    infres = cursor.fetchall()
-    my_student_name = infres[0][0]
-    my_student_class = infres[0][1]
+    if (flag_redirect):
+        query = "SELECT student_name,class FROM student WHERE student_id='{}'".format(my_student_id)
+        cursor = conn.cursor()
+        cursor.execute(query)
+        infres = cursor.fetchall()
+        my_student_name = infres[0][0]
+        my_student_class = infres[0][1]
 
-    # 選課清單
+    # 取消關注清單
     form = """
         <html>
         <title>選課系統</title>
         <body>
         <h1>選課系統</h1>
-        <form method="post" action="/action" >
+        <form method="post" action="/index" >
+        <label>系所：</label>
             <select name="my_department">
-                <option value="">請選擇</option>
+                <option value="">全部</option>
                 <option>企業管理學系</option>
                 <option>通識</option>
                 <option>資訊工程學系</option>
             </select>
+        <label>班級：</label>
             <select name="my_class">
-                    <option value="">請選擇</option>
+                    <option value="">全部</option>
                 <optgroup label="企管系">
                     <option>企管一甲</option>
                     <option>企管一乙</option>
@@ -225,60 +243,135 @@ def index():
                     <option>資訊跨領域學程資訊三</option>
                 </optgroup>
             </select>
+        <label>課程名稱：</label>
             <input name="my_name">
-            <input type="submit" value="送出">
+            <button name="搜尋">搜尋</button><br>
         </form>
         <p><a href="/">重新登入</a></p>
         <label>班級：{}</label><br>
         <label>使用者：{}</label><br>
         <label>學號：{}</label><br>
         <label>總學分：{}</label>
+        <form method="post" action="/action">
+            <button name="去選課">去選課!</button><br>
+        </form>
     """.format(my_student_class, my_student_name, my_student_id, credsum[0][0])
 
-    # 使用者的必修課表
-    form += """      
-        <h1>已選課表</h1>
-        <button onclick="hideandshow(registeredinf)">收起已選課表</button>
-        <div id="registered_table">
-        <table border="2">
-            <tr>
-                <th align='center' valign="middle"></th>
-                <th align='center' valign="middle">Mon</th>
-                <th align='center' valign="middle">Tue</th>
-                <th align='center' valign="middle">Wed</th>
-                <th align='center' valign="middle">Thu</th>
-                <th align='center' valign="middle">Fri</th>
-                <th align='center' valign="middle">Sat</th>
-                <th align='center' valign="middle">Sun</th>
-            </tr>
-    """
-    # 找出使用者的必修課的學號、課程代碼、課程名稱、星期數、節次，主要用來查詢課程的時間
-    query = "SELECT DISTINCT registered.student_id,registered.class_id,course.class_name,time.day,time.sessions,course.credits FROM course,time,registered WHERE course.class_id=time.class_id AND registered.class_id=course.class_id AND registered.student_id = '{}';".format(
+    # 關注清單
+    query = "SELECT DISTINCT * FROM concerned NATURAL JOIN course WHERE concerned.student_id='{}';".format(
         my_student_id)
+
+    # 執行查詢
     cursor = conn.cursor()
     cursor.execute(query)
-    fetchresult = cursor.fetchall()
-    classcounter = 0
+    concern_list_result = cursor.fetchall()
 
-    # 比對星期數和節次將課程名稱填進去課表
-    for i in range(1, 15):
-        form += "<tr>"
-        form += "<th align='center' valign='middle'>{}</th>".format(i)
-        for j in range(1, 8):
-            classcounter = 0
-            form += "<td align='center' valign='middle'>"
-            for (r1, r2, r3, r4, r5, r6) in fetchresult:
-                if i == r5 and j == cn[r4]:
-                    if classcounter == 0:
-                        form += "{}".format(r3)
-                        classcounter += 1
-                    else:
-                        form += "<br>{}".format(r3)
-                        classcounter += 1
-            form += "</td>"
-        form += "</tr>"
+    form += """
+        <h1>取消關注清單</h1>
+        <button onclick="hideandshow(coninf)">收起取消關注清單</button>
+        <div id="concern_table">
+        <table border="1" style="width:100%">
+            <tr>
+                <th align='center' valign="middle">取消關注</th>
+                <th align='center' valign="middle">開課班級</th>
+                <th align='center' valign="middle">課程名稱</th>
+                <th align='center' valign="middle">時間</th>
+                <th align='center' valign="middle">課程代碼</th>
+                <th align='center' valign="middle">學分</th>
+                <th align='center' valign="middle">必選修</th>
+                <th align='center' valign="middle">系所</th>
+                <th align='center' valign="middle">實收名額/開放名額</th>
+                <th align='center' valign="middle">教師</th>
+            </tr>
+    """
+    # 取得並列出所有查詢結果
+    for (d1, d2, d3, d4, d5, d6, d7, d8, d9, d10) in concern_list_result:
+        class_time = ""
+        query = "SELECT * FROM time WHERE class_id='{}'".format(d1)
+        cursor = conn.cursor()
+        cursor.execute(query)
+        for (t1, t2, t3) in cursor.fetchall():
+            class_time += " ({}) ".format(t2)
+            class_time += str(t3)
+        form += """
+            <tr>
+            <form method="post" action="/quit_concern">
+                <td align='center' valign="middle"><button name="my_class_id" value={} onclick="/quit_concern">取消關注</button></td>
+            </form>
+                <td align='center' valign="middle">{}</td>
+                <td align='center' valign="middle">{}</td>
+                <td align='center' valign="middle">{}</td>
+                <td align='center' valign="middle">{}</td>
+                <td align='center' valign="middle">{}</td>
+                <td align='center' valign="middle">{}</td>
+                <td align='center' valign="middle">{}</td>
+                <td align='center' valign="middle">{}/{}</td>
+                <td align='center' valign="middle">{}</td>
+            </tr>
+        """.format(d1, d3, d4, class_time, d1, d5, d6, d7, d9, d8, d10)
 
-    form += "</table></div><br>"
+    form += """
+        </table>
+        </div>
+    """
+
+    # 關注清單
+    query = "SELECT * FROM course where class_name LIKE '%{}%' and class LIKE '%{}%' AND department LIKE '%{}%' and Class_ID not in (SELECT Class_id FROM registered WHERE Student_ID = '{}') and Class_ID not in (SELECT Class_id FROM concerned WHERE Student_ID = '{}')".format(
+        my_class_name, my_class, my_department, my_student_id, my_student_id)
+
+    # 執行查詢
+    cursor = conn.cursor()
+    cursor.execute(query)
+    register_list_result = cursor.fetchall()
+
+    form += """
+        <h1>關注清單</h1>
+        <button onclick="hideandshow(reinf)">收起關注清單</button>
+        <div id="registered_table">
+        <table border="1" style="width:100%">
+            <tr>
+                <th align='center' valign="middle">關注</th>
+                <th align='center' valign="middle">開課班級</th>
+                <th align='center' valign="middle">課程名稱</th>
+                <th align='center' valign="middle">時間</th>
+                <th align='center' valign="middle">課程代碼</th>
+                <th align='center' valign="middle">學分</th>
+                <th align='center' valign="middle">必選修</th>
+                <th align='center' valign="middle">系所</th>
+                <th align='center' valign="middle">實收名額/開放名額</th>
+                <th align='center' valign="middle">教師</th>
+            </tr>
+    """
+    # 取得並列出所有查詢結果
+    for (d1, d2, d3, d4, d5, d6, d7, d8, d9) in register_list_result:
+        class_time = ""
+        query = "SELECT * FROM time WHERE class_id='{}'".format(d3)
+        cursor = conn.cursor()
+        cursor.execute(query)
+        for (t1, t2, t3) in cursor.fetchall():
+            class_time += " ({}) ".format(t2)
+            class_time += str(t3)
+        form += """
+            <tr>
+            <form method="post" action="/concern">
+                <td align='center' valign="middle"><button name="my_class_id" value={} onclick="/concern">關注</button></td>
+            </form>
+                <td align='center' valign="middle">{}</td>
+                <td align='center' valign="middle">{}</td>
+                <td align='center' valign="middle">{}</td>
+                <td align='center' valign="middle">{}</td>
+                <td align='center' valign="middle">{}</td>
+                <td align='center' valign="middle">{}</td>
+                <td align='center' valign="middle">{}</td>
+                <td align='center' valign="middle">{}/{}</td>
+                <td align='center' valign="middle">{}</td>
+            </tr>
+        """.format(d3, d1, d2, class_time, d3, d4, d5, d6, d8, d7, d9)
+
+    form += """
+        </table>
+        </div>
+    """
 
     # 使用者的關注課表
     form += """
@@ -331,7 +424,8 @@ def index():
     form += """
         </body>
         <script>
-            var registeredinf=document.getElementById("registered_table");
+            var reinf=document.getElementById("registered_table");
+            var coninf=document.getElementById("concern_table");
             var concernedinf=document.getElementById("concerned_table");
             function hideandshow(inf){
                 if(inf.style.display==="none"){
@@ -351,6 +445,8 @@ def index():
 @app.route('/action', methods=['GET', 'POST'])
 def action():
     global my_class, my_department, my_class_name, flag_action
+    cn = {'一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6, '七': 7}  # 用字典將星期數從中文數字轉為阿拉伯數字
+
     # 取得輸入的文字
     if (flag_action or request.form.get("my_class") == '' or request.form.get(
             "my_department") == '' or request.form.get("my_name") == ''):
@@ -456,7 +552,6 @@ def action():
         </div>
     """
 
-    # 關注清單
     query = "SELECT DISTINCT * FROM concerned NATURAL JOIN course WHERE concerned.student_id='{}';".format(
         my_student_id)
 
@@ -466,12 +561,11 @@ def action():
     concern_list_result = cursor.fetchall()
 
     results += """
-        <h1>關注清單</h1>
-        <button onclick="hideandshow(coninf)">收起關注清單</button>
+        <h1>加選清單</h1>
+        <button onclick="hideandshow(coninf)">收起加選清單</button>
         <div id="concern_table">
         <table border="1" style="width:100%">
             <tr>
-                <th align='center' valign="middle">取消關注</th>
                 <th align='center' valign="middle">開課班級</th>
                 <th align='center' valign="middle">課程名稱</th>
                 <th align='center' valign="middle">時間</th>
@@ -495,9 +589,6 @@ def action():
             class_time += str(t3)
         results += """
             <tr>
-            <form method="post" action="/quit_concern">
-                <td align='center' valign="middle"><button name="my_class_id" value={} onclick="/quit_concern">取消關注</button></td>
-            </form>
                 <td align='center' valign="middle">{}</td>
                 <td align='center' valign="middle">{}</td>
                 <td align='center' valign="middle">{}</td>
@@ -511,76 +602,62 @@ def action():
                 <td align='center' valign="middle"><button name="my_class_id" value={} onclick="/register_class">加選</button></td>
             </form>
             </tr>
-        """.format(d1, d3, d4, class_time, d1, d5, d6, d7, d9, d8, d10, d1)
+        """.format(d3, d4, class_time, d1, d5, d6, d7, d9, d8, d10, d1)
 
     results += """
         </table>
         </div>
     """
 
-    # 加選清單
-    query = "SELECT * FROM course where class_name LIKE '%{}%' and class LIKE '%{}%' AND department LIKE '%{}%' and Class_ID not in (SELECT Class_id FROM registered WHERE Student_ID = '{}')".format(
-        my_class_name, my_class, my_department, my_student_id)
+    # 使用者的必修課表
+    results += """      
+        <h1>已選課表</h1>
+        <button onclick="hideandshow(registeredinf)">收起已選課表</button>
+        <div id="registered_table">
+        <table border="2">
 
-    # 執行查詢
+            <tr>
+                <th align='center' valign="middle"></th>
+                <th align='center' valign="middle">Mon</th>
+                <th align='center' valign="middle">Tue</th>
+                <th align='center' valign="middle">Wed</th>
+                <th align='center' valign="middle">Thu</th>
+                <th align='center' valign="middle">Fri</th>
+                <th align='center' valign="middle">Sat</th>
+                <th align='center' valign="middle">Sun</th>
+            </tr>
+    """
+    # 找出使用者的必修課的學號、課程代碼、課程名稱、星期數、節次，主要用來查詢課程的時間
+    query = "SELECT DISTINCT registered.student_id,registered.class_id,course.class_name,time.day,time.sessions,course.credits FROM course,time,registered WHERE course.class_id=time.class_id AND registered.class_id=course.class_id AND registered.student_id = '{}';".format(
+        my_student_id)
     cursor = conn.cursor()
     cursor.execute(query)
-    register_list_result = cursor.fetchall()
+    fetchresult = cursor.fetchall()
+    classcounter = 0
+
+    # 比對星期數和節次將課程名稱填進去課表
+    for i in range(1, 15):
+        results += "<tr>"
+        results += "<th align='center' valign='middle'>{}</th>".format(i)
+        for j in range(1, 8):
+            classcounter = 0
+            results += "<td align='center' valign='middle'>"
+            for (r1, r2, r3, r4, r5, r6) in fetchresult:
+                if i == r5 and j == cn[r4]:
+                    if classcounter == 0:
+                        results += "{}".format(r3)
+                        classcounter += 1
+                    else:
+                        results += "<br>{}".format(r3)
+                        classcounter += 1
+            results += "</td>"
+        results += "</tr>"
+
+    results += "</table></div><br>"
 
     results += """
-        <h1>加選清單</h1>
-        <button onclick="hideandshow(reinf)">收起選課清單</button>
-        <div id="register_table">
-        <table border="1" style="width:100%">
-            <tr>
-                <th align='center' valign="middle">關注</th>
-                <th align='center' valign="middle">開課班級</th>
-                <th align='center' valign="middle">課程名稱</th>
-                <th align='center' valign="middle">時間</th>
-                <th align='center' valign="middle">課程代碼</th>
-                <th align='center' valign="middle">學分</th>
-                <th align='center' valign="middle">必選修</th>
-                <th align='center' valign="middle">系所</th>
-                <th align='center' valign="middle">實收名額/開放名額</th>
-                <th align='center' valign="middle">教師</th>
-                <th align='center' valign="middle">加選</th>
-            </tr>
-    """
-    # 取得並列出所有查詢結果
-    for (d1, d2, d3, d4, d5, d6, d7, d8, d9) in register_list_result:
-        class_time = ""
-        query = "SELECT * FROM time WHERE class_id='{}'".format(d3)
-        cursor = conn.cursor()
-        cursor.execute(query)
-        for (t1, t2, t3) in cursor.fetchall():
-            class_time += " ({}) ".format(t2)
-            class_time += str(t3)
-        results += """
-            <tr>
-            <form method="post" action="/concern">
-                <td align='center' valign="middle"><button name="my_class_id" value={} onclick="/concern">關注</button></td>
-            </form>
-                <td align='center' valign="middle">{}</td>
-                <td align='center' valign="middle">{}</td>
-                <td align='center' valign="middle">{}</td>
-                <td align='center' valign="middle">{}</td>
-                <td align='center' valign="middle">{}</td>
-                <td align='center' valign="middle">{}</td>
-                <td align='center' valign="middle">{}</td>
-                <td align='center' valign="middle">{}/{}</td>
-                <td align='center' valign="middle">{}</td>
-            <form method="post" action="/register_class">
-                <td align='center' valign="middle"><button name="my_class_id" value={} onclick="/register_class">加選</button></td>
-            </form>
-            </tr>
-        """.format(d3, d1, d2, class_time, d3, d4, d5, d6, d8, d7, d9, d3)
-
-    results += """
-        </table>
-        </div>
-
         <script>
-            var reinf=document.getElementById("register_table");
+            var registeredinf=document.getElementById("registered_table");
             var wdinf=document.getElementById("withdraw_table");
             var coninf=document.getElementById("concern_table");
             function hideandshow(inf){
@@ -730,8 +807,8 @@ def concern_class():
         <title>選課系統</title>
         <body>
         <h1>關注成功</h1>
-        <form method="post" action="/action">
-            <button name="返回課程清單">返回課程清單</button><br>
+        <form method="post" action="/index">
+            <button name="返回搜尋">返回搜尋</button><br>
         </form>
         </body>
         </html>
@@ -748,8 +825,8 @@ def quit_concern():
         <title>選課系統</title>
         <body>
         <h1>取消關注成功</h1>
-        <form method="post" action="/action">
-            <button name="返回課程清單">返回課程清單</button><br>
+        <form method="post" action="/index">
+            <button name="返回搜尋">返回搜尋</button><br>
         </form>
         </body>
         </html>
