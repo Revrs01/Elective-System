@@ -24,6 +24,8 @@ def register(my_student_id, class_id):  # 加選課程
     cursor.execute(query)
     conn.commit()
     count_total_credits(my_student_id)
+    cursor.execute("update course set real_quota = real_quota+1 where class_ID = '{}';".format(class_id))
+    conn.commit()
 
 
 def check_register_quota(class_id):  # 檢查開課人數是否已達上限
@@ -117,6 +119,7 @@ registered_M()  # 將必修課加入課表中
 my_student_id = 'D0XXXXXX'
 flag_index = True
 flag_action = True
+flag_redirect = True
 credsum = 0
 my_student_name = 'XXX'
 my_student_class='XXXX'
@@ -750,6 +753,8 @@ def withdraw_class():
 
         cursor.execute(
             "delete from registered where student_ID = '{}' and class_ID = '{}'".format(my_student_id, my_class_id))
+        conn.commit()
+        cursor.execute("update course set real_quota = real_quota-1 where class_ID = '{}';".format(get_class_id))
         conn.commit()
         success_view = """
                     <html>
