@@ -76,7 +76,7 @@ def check_register_credit(class_id):  # 檢查已選課程中所有學分數加�
     cursor = conn.cursor()
     cursor.execute(query)
     add_credit = cursor.fetchall()
-    if(credsum[0][0]+ add_credit[0][0] > 30):
+    if (credsum[0][0] + add_credit[0][0] > 30):
         return True
     else:
         return False
@@ -84,32 +84,37 @@ def check_register_credit(class_id):  # 檢查已選課程中所有學分數加�
 
 def count_total_credits(my_student_id):
     global credsum
-    #查詢目前課表內學分數
-    query = "SELECT sum(Credits) FROM (SELECT distinct Class_id,Credits FROM registered NATURAL JOIN course WHERE registered.student_id = '{}')AS a;".format(my_student_id)
+    # 查詢目前課表內學分數
+    query = "SELECT sum(Credits) FROM (SELECT distinct Class_id,Credits FROM registered NATURAL JOIN course WHERE registered.student_id = '{}')AS a;".format(
+        my_student_id)
     # 執行查詢
     cursor = conn.cursor()
     cursor.execute(query)
-    #計算課程的學分數
+    # 計算課程的學分數
     credsum = cursor.fetchall()
-    
 
-def concern(my_student_id,class_id):#關注課程
+
+def concern(my_student_id, class_id):  # 關注課程
     query = "insert into concerned VALUES('{}',{})".format(my_student_id, class_id)
     cursor = conn.cursor()
     cursor.execute(query)
     conn.commit()
 
+
 def init_flag():
     global flag_action,flag_index,flag_redirect
+
     flag_index = True
     flag_action = True
     flag_redirect = True
 
-def del_concern(my_student_id,class_id):#退關注
-    query = "DELETE FROM concerned WHERE Student_ID='{}' AND Class_id = {};".format(my_student_id,class_id)
+
+def del_concern(my_student_id, class_id):  # 退關注
+    query = "DELETE FROM concerned WHERE Student_ID='{}' AND Class_id = {};".format(my_student_id, class_id)
     cursor = conn.cursor()
     cursor.execute(query)
     conn.commit()
+
 
 app = Flask(__name__)
 
@@ -122,7 +127,8 @@ flag_action = True
 flag_redirect = True
 credsum = 0
 my_student_name = 'XXX'
-my_student_class='XXXX'
+my_student_class = 'XXXX'
+
 
 # 帳號及mysql部分還需修改
 @app.route('/')
@@ -152,11 +158,11 @@ def signin():
     return start
 
 
-@app.route('/index', methods=['GET','POST'])
+@app.route('/index', methods=['GET', 'POST'])
 def index():
-    global my_student_id,flag_index,my_student_name,my_student_class
+    global my_student_id, flag_index, my_student_name, my_student_class
     cn = {'一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6, '七': 7}  # 用字典將星期數從中文數字轉為阿拉伯數字
-    if(flag_index):
+    if (flag_index):
         my_student_id = request.form.get("username")
         flag_index = False
 
@@ -181,7 +187,6 @@ def index():
         infres=cursor.fetchall()
         my_student_name=infres[0][0]
         my_student_class=infres[0][1]
-
 
     # 取消關注清單
     form = """
@@ -436,12 +441,14 @@ def index():
     return form
 
 
-@app.route('/action', methods=['GET','POST'])
+@app.route('/action', methods=['GET', 'POST'])
 def action():
     global my_class,my_department,my_class_name,flag_action
     cn = {'一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6, '七': 7}  # 用字典將星期數從中文數字轉為阿拉伯數字
+
     # 取得輸入的文字
-    if(flag_action or request.form.get("my_class")=='' or request.form.get("my_department") == '' or request.form.get("my_name") == ''):
+    if (flag_action or request.form.get("my_class") == '' or request.form.get(
+            "my_department") == '' or request.form.get("my_name") == ''):
         my_class = request.form.get("my_class")
         my_department = request.form.get("my_department")
         my_class_name = request.form.get("my_name")
@@ -454,15 +461,16 @@ def action():
 
     count_total_credits(my_student_id)
 
-    query = "SELECT DISTINCT * from registered NATURAL JOIN course WHERE registered.student_id='{}' GROUP BY class_id;".format(my_student_id)
+    query = "SELECT DISTINCT * from registered NATURAL JOIN course WHERE registered.student_id='{}';".format(
+        my_student_id)
 
     # 執行查詢
     cursor = conn.cursor()
     cursor.execute(query)
-    withdraw_list_result=cursor.fetchall()
+    withdraw_list_result = cursor.fetchall()
 
     # 目前找不到正確使用超連結回到上一頁的做法，只好換成按鈕，並使用回到歷史紀錄中的上一頁
-    #退選清單
+    # 退選清單
     results = """
         <!DOCTYPE html>
         <html>
@@ -497,7 +505,7 @@ def action():
                 }
             }
         </script>
-  
+
         <table border="1" style="width:100%">
             <tr>
                 <th align='center' valign="middle">開課班級</th>
@@ -513,16 +521,16 @@ def action():
             </tr>
     """
 
-    class_time=""
+    class_time = ""
 
     for (d1, d2, d3, d4, d5, d6, d7, d8, d9, d10) in withdraw_list_result:
-        class_time=""
-        query="SELECT * FROM time WHERE class_id='{}'".format(d1)
+        class_time = ""
+        query = "SELECT * FROM time WHERE class_id='{}'".format(d1)
         cursor = conn.cursor()
         cursor.execute(query)
-        for (t1,t2,t3) in cursor.fetchall():
-            class_time+=" ({}) ".format(t2)
-            class_time+=str(t3)
+        for (t1, t2, t3) in cursor.fetchall():
+            class_time += " ({}) ".format(t2)
+            class_time += str(t3)
         results += """
             <tr>
                 <td align='center' valign="middle">{}</td>
@@ -548,7 +556,7 @@ def action():
     # 執行查詢
     cursor = conn.cursor()
     cursor.execute(query)
-    concern_list_result=cursor.fetchall()
+    concern_list_result = cursor.fetchall()
 
     results += """
         <h1>加選清單</h1>
@@ -570,13 +578,13 @@ def action():
     """
     # 取得並列出所有查詢結果
     for (d1, d2, d3, d4, d5, d6, d7, d8, d9, d10) in concern_list_result:
-        class_time=""
-        query="SELECT * FROM time WHERE class_id='{}'".format(d1)
+        class_time = ""
+        query = "SELECT * FROM time WHERE class_id='{}'".format(d1)
         cursor = conn.cursor()
         cursor.execute(query)
-        for (t1,t2,t3) in cursor.fetchall():
-            class_time+=" ({}) ".format(t2)
-            class_time+=str(t3)
+        for (t1, t2, t3) in cursor.fetchall():
+            class_time += " ({}) ".format(t2)
+            class_time += str(t3)
         results += """
             <tr>
                 <td align='center' valign="middle">{}</td>
@@ -605,6 +613,7 @@ def action():
         <button onclick="hideandshow(registeredinf)">收起已選課表</button>
         <div id="registered_table">
         <table border="2">
+
             <tr>
                 <th align='center' valign="middle"></th>
                 <th align='center' valign="middle">Mon</th>
@@ -623,6 +632,7 @@ def action():
     cursor.execute(query)
     fetchresult = cursor.fetchall()
     classcounter = 0
+
 
     # 比對星期數和節次將課程名稱填進去課表
     for i in range(1, 15):
@@ -734,7 +744,8 @@ def register_class():
 @app.route('/withdraw_class', methods=['GET', 'POST'])
 def withdraw_class():
     get_class_id = request.form.get("class_id")
-    query = "select class_id from registered where class_id = '{}' and student_ID = '{}'".format(get_class_id, my_student_id)
+    query = "select class_id from registered where class_id = '{}' and student_ID = '{}'".format(get_class_id,
+                                                                                                 my_student_id)
     cursor = conn.cursor()
     cursor.execute(query)
 
@@ -787,10 +798,11 @@ def withdraw_class():
                 """
         return failed_view
 
+
 @app.route('/concern', methods=['GET', 'POST'])
 def concern_class():
     class_id = request.form.get("my_class_id")
-    concern(my_student_id,class_id)
+    concern(my_student_id, class_id)
     view = """
         <html>
         <title>選課系統</title>
@@ -804,10 +816,11 @@ def concern_class():
     """
     return view
 
+
 @app.route('/quit_concern', methods=['GET', 'POST'])
 def quit_concern():
     class_id = request.form.get("my_class_id")
-    del_concern(my_student_id,class_id)
+    del_concern(my_student_id, class_id)
     view = """
         <html>
         <title>選課系統</title>
